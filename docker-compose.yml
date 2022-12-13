@@ -1,0 +1,48 @@
+version: "3.9"
+services:
+    app:
+        build:
+            args:
+                user: challenger
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        image: transactions
+        container_name: transactions-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        depends_on:
+            - db
+            - nginx
+        volumes:
+            - ./:/var/www
+        networks:
+            - transactions
+    db:
+        image: mysql:8.0
+        container_name: transactions-db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_PASSWORD: ${DB_PASSWORD}
+            MYSQL_USER: ${DB_USERNAME}
+            SERVICE_TAGS: dev
+            SERVICE_NAME: mysql
+        networks:
+            - transactions
+    nginx:
+        image: nginx:alpine
+        container_name: transactions-nginx
+        restart: unless-stopped
+        ports:
+            - 8000:80
+        volumes:
+            - ./:/var/www
+            - ./docker-compose/nginx:/etc/nginx/conf.d/
+        networks:
+            - transactions
+
+networks:
+    transactions:
+        driver: bridge
